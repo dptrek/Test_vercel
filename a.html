@@ -13,10 +13,8 @@ pre { background: #f7f7f7; padding: 10px; margin-top: 15px; white-space: pre-wra
 <body>
 <h2>Upload JSON File to GitHub Repository</h2>
 
-<!-- Hidden file input -->
 <input type="file" id="fileInput" accept=".json" style="display:none;">
 
-<!-- Custom buttons -->
 <button id="chooseBtn">Choose JSON File</button>
 <span id="fileName">No file selected</span>
 <br>
@@ -25,22 +23,14 @@ pre { background: #f7f7f7; padding: 10px; margin-top: 15px; white-space: pre-wra
 <pre id="output"></pre>
 
 <script>
-const GITHUB_TOKEN = "";
-const OWNER = "dptrek";
-const REPO = "dptrek";
-const BRANCH = "main";
-const FOLDER = "data"; // target folder
-
 const fileInput = document.getElementById("fileInput");
 const chooseBtn = document.getElementById("chooseBtn");
 const fileNameSpan = document.getElementById("fileName");
 const uploadBtn = document.getElementById("uploadBtn");
 const output = document.getElementById("output");
 
-// Custom "Choose File" button triggers hidden input
 chooseBtn.onclick = () => fileInput.click();
 
-// Display selected file name
 fileInput.onchange = () => {
   if (fileInput.files.length) {
     fileNameSpan.textContent = fileInput.files[0].name;
@@ -50,42 +40,26 @@ fileInput.onchange = () => {
 };
 
 async function uploadFile(file) {
-  const path = `${FOLDER}/${file.name}`;
-  const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`;
-
   const content = await file.text();
-  const message = `Upload ${file.name}`;
+  const base64Content = btoa(unescape(encodeURIComponent(content)));
 
-  let sha = null;
-  const checkRes = await fetch(url, {
-    headers: { "Authorization": "token " + GITHUB_TOKEN }
-  });
-  if (checkRes.ok) {
-    const json = await checkRes.json();
-    sha = json.sha;
-  }
-
-  const res = await fetch(url, {
-    method: "PUT",
-    headers: {
-      "Authorization": "token " + GITHUB_TOKEN,
-      "Accept": "application/vnd.github.v3+json"
-    },
+  const res = await fetch("/api/upload", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      message,
-      content: btoa(unescape(encodeURIComponent(content))),
-      branch: BRANCH,
-      sha: sha || undefined
+      fileName: file.name,
+      content: base64Content
     })
   });
 
   if (!res.ok) {
-    throw new Error(await res.text());
+    const text = await res.text();
+    throw new Error(text);
   }
+
   return await res.json();
 }
 
-// Upload button logic
 uploadBtn.onclick = async () => {
   if (!fileInput.files.length) {
     output.textContent = "Please choose a JSON file first.";
