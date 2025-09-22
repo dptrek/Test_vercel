@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Upload JSON to GitHub Repo</title>
+<style>
+body { font-family: sans-serif; max-width: 600px; margin: 40px auto; }
+button { margin-top: 12px; padding: 8px 16px; cursor: pointer; }
+pre { background: #f7f7f7; padding: 10px; margin-top: 15px; white-space: pre-wrap; word-break: break-all; }
+#fileName { margin-top: 10px; font-style: italic; }
+</style>
+</head>
+<body>
+<h2>Upload JSON File to GitHub Repository</h2>
+
+<!-- Hidden file input -->
+<input type="file" id="fileInput" accept=".json" style="display:none;">
+
+<!-- Custom buttons -->
+<button id="chooseBtn">Choose JSON File</button>
+<span id="fileName">No file selected</span>
+<br>
+<button id="uploadBtn">Upload</button>
+
+<pre id="output"></pre>
+
+<script>
+const GITHUB_TOKEN = "";
+const OWNER = "dptrek";
+const REPO = "dptrek";
+const BRANCH = "main";
+const FOLDER = "data"; // target folder
+
+const fileInput = document.getElementById("fileInput");
+const chooseBtn = document.getElementById("chooseBtn");
+const fileNameSpan = document.getElementById("fileName");
+const uploadBtn = document.getElementById("uploadBtn");
+const output = document.getElementById("output");
+
+// Custom "Choose File" button triggers hidden input
+chooseBtn.onclick = () => fileInput.click();
+
+// Display selected file name
+fileInput.onchange = () => {
+  if (fileInput.files.length) {
+    fileNameSpan.textContent = fileInput.files[0].name;
+  } else {
+    fileNameSpan.textContent = "No file selected";
+  }
+};
+
+async function uploadFile(file) {
+  const path = `${FOLDER}/${file.name}`;
+  const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`;
+
+  const content = await file.text();
+  const message = `Upload ${file.name}`;
+
+  let sha = null;
+  const checkRes = await fetch(url, {
+    headers: { "Authorization": "token " + GITHUB_TOKEN }
+  });
+  if (checkRes.ok) {
+    const json = await checkRes.json();
+    sha = json.sha;
+  }
+
+  const res = await fetch(url, {
+    method: "PUT",
+    headers: {
+      "Authorization": "token " + GITHUB_TOKEN,
+      "Accept": "application/vnd.github.v3+json"
+    },
+    body: JSON.stringify({
+      message,
+      content: btoa(unescape(encodeURIComponent(content))),
+      branch: BRANCH,
+      sha: sha || undefined
+    })
+  });
+
+  if (!res.ok) {
+    throw new Error(await res.text());
+  }
+  return await res.json();
+}
+
+// Upload button logic
+uploadBtn.onclick = async () => {
+  if (!fileInput.files.length) {
+    output.textContent = "Please choose a JSON file first.";
+    return;
+  }
+
+  const file = fileInput.files[0];
+  output.textContent = "Uploading: " + file.name + "...";
+
+  try {
+    const result = await uploadFile(file);
+    output.textContent = "Upload successful!";
+  } catch (err) {
+    output.textContent = "Upload failed: " + err.message;
+  }
+};
+</script>
+</body>
+</html>
