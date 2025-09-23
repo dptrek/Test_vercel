@@ -14,7 +14,7 @@ export default async function handler(req, res) {
     const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
     const OWNER = "dptrek";
     const REPO = "dptrek";
-    const BRANCH = process.env.BRANCH || "main";
+    const BRANCH = "main";
     const FOLDER = "data";
 
     const path = `${FOLDER}/${fileName}`;
