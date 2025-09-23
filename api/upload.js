@@ -1,8 +1,8 @@
 import fetch from "node-fetch";
 
 export default async function handler(req, res) {
-  // 允许跨域访问（GitHub Pages 前端可以调用）
-  res.setHeader("Access-Control-Allow-Origin", "*"); 
+  // ==== CORS 设置，允许前端跨域调用 ====
+  res.setHeader("Access-Control-Allow-Origin", "*"); // 或指定你的前端域名
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
@@ -11,6 +11,7 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
+  // 仅允许 POST
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -22,15 +23,15 @@ export default async function handler(req, res) {
     }
 
     const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
-    const OWNER = "dptrek";
-    const REPO = "dptrek";
-    const BRANCH = "main";
-    const FOLDER = "data";
+    const OWNER = "dptrek";  // GitHub 用户名
+    const REPO = "dptrek";   // 仓库名
+    const BRANCH = "main";   // 分支
+    const FOLDER = "data";   // 上传目录
 
     const path = `${FOLDER}/${fileName}`;
     const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${path}`;
 
-    // 检查文件是否已存在获取 SHA
+    // 检查文件是否已存在，获取 SHA
     let sha = null;
     const checkRes = await fetch(url, {
       headers: { Authorization: `token ${GITHUB_TOKEN}` },
