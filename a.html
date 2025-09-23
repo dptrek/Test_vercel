@@ -23,6 +23,8 @@ pre { background: #f7f7f7; padding: 10px; margin-top: 15px; white-space: pre-wra
 <pre id="output"></pre>
 
 <script>
+const VEREL_API_URL = "https://test-vercel-six-gules.vercel.app/api/upload"; // 替换为你的 Vercel 域名
+
 const fileInput = document.getElementById("fileInput");
 const chooseBtn = document.getElementById("chooseBtn");
 const fileNameSpan = document.getElementById("fileName");
@@ -43,7 +45,7 @@ async function uploadFile(file) {
   const content = await file.text();
   const base64Content = btoa(unescape(encodeURIComponent(content)));
 
-  const res = await fetch("/api/upload", {
+  const res = await fetch(VEREL_API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
